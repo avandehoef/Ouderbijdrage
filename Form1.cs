@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Globalization;
 
 namespace Ouderbijdrage
 {
@@ -24,13 +17,13 @@ namespace Ouderbijdrage
 
     public partial class ouderBijdrage : Form
     {
-        decimal totaal = 0.00m, subtotaal = 0.00m;
+        decimal totaal = 0.00m, subtotaal = 0.00m; // subtotaal is het variabele gedeelte van de kosten; hierover kan evt de 25% korting worden verleend als er sprake is van een eenoudergezin
         decimal basisBedrag = 50.00m; // basisbedrag is € 50
 
-        decimal bijdrageEenKindKleinerDanTien = 25.00m, bijdrageTweeKindKleinerDanTien = 50.00m, bijdrageDrieKindKleinerDanTien = 75.00m;
-        decimal bijdrageEenKindGroterDanTien = 37.00m, bijdrageTweeKindGroterDanTien = 74.00m;
+        decimal bijdrageEenKindKleinerDanTien = 25.00m, bijdrageTweeKindKleinerDanTien = 50.00m, bijdrageDrieKindKleinerDanTien = 75.00m; // per kind van jonger dan 10 jaar op de peildatum wordt er een bedrag van € 25 gerekend
+        decimal bijdrageEenKindGroterDanTien = 37.00m, bijdrageTweeKindGroterDanTien = 74.00m; // per kind 10 of groter > € 37 per kind
 
-        decimal bijdrageKindKleinerTien = 0.00m, bijdrageKindGroterTien = 0.00m; // per kind van jonger dan 10 jaar op de peildatum wordt er een bedrag van € 25 gerekend, per kind 10 of groter > € 37 per kind
+        decimal bijdrageKindKleinerTien = 0.00m, bijdrageKindGroterTien = 0.00m; 
         
         decimal kortingEenOuder = 0.75m; // een éénoudergezin krijgt 25% korting (dus betaalt 75%) van het "berekende" tarief (niet over de basis bijdrage)
         DateTime peilDatum = DateTime.Now;
@@ -102,1060 +95,83 @@ namespace Ouderbijdrage
             dagVijf = Convert.ToInt16(comboBoxGroterTienTweedeKindDag.Text);
             maandVijf = Convert.ToInt16((comboBoxGroterTienTweedeKindMaand.SelectedIndex) + 1);
 
-            if (eenKindJongerDanTien)
+            bool foutieveInvoerEersteKind = (comboBoxKleinerTienEersteKindJaar.Text == "2007" && maandEen < peilDatum.Month) || (comboBoxKleinerTienEersteKindJaar.Text == "2007" && maandEen == peilDatum.Month && dagEen <= peilDatum.Day);
+            bool foutieveInvoerTweedeKind = (comboBoxKleinerTienTweedeKindJaar.Text == "2007" && maandTwee < peilDatum.Month) || (comboBoxKleinerTienTweedeKindJaar.Text == "2007" && maandTwee == peilDatum.Month && dagTwee <= peilDatum.Day);
+            bool foutieveInvoerDerdeKind = (comboBoxKleinerTienDerdeKindJaar.Text == "2007" && maandDrie < peilDatum.Month) || (comboBoxKleinerTienDerdeKindJaar.Text == "2007" && maandDrie == peilDatum.Month && dagDrie <= peilDatum.Day);
+
+            bool foutieveInvoerKindKleinerDanTien = (foutieveInvoerEersteKind || foutieveInvoerTweedeKind || foutieveInvoerDerdeKind);
+
+            bool foutieveInvoerVierdeKind = (comboBoxGroterTienEersteKindJaar.Text == "2007" && maandVier > peilDatum.Month) || (comboBoxGroterTienEersteKindJaar.Text == "2007" && maandVier == peilDatum.Month && dagVier >= peilDatum.Day);
+            bool foutieveInvoerVijfdeKind = (comboBoxGroterTienTweedeKindJaar.Text == "2007" && maandVijf > peilDatum.Month) || (comboBoxGroterTienTweedeKindJaar.Text == "2007" && maandVijf == peilDatum.Month && dagVijf >= peilDatum.Day);
+
+            bool foutieveInvoerKindGroterDanTien = (foutieveInvoerVierdeKind || foutieveInvoerVijfdeKind);
+
+            if (foutieveInvoerKindKleinerDanTien)
             {
-                if (comboBoxKleinerTienEersteKindJaar.Text != "2007")
-                {
-                    bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                }
-                else
-                {
-                    if (maandEen < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: dit kind is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month)
-                    {
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: dit kind is 10 of ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
+                textFoutMelding.Visible = true;
+                textFoutMelding.Text = textFoutMelding.Text = "foutieve invoer: Eén van de ingevoerde kinderen bij jonger dan 10 is (ouder dan) 10; voer deze in het veld voor kinderen van 10 en ouder in";
+                textResultaat.Text = "";
+                textTotaleBijdrageIs.Visible = false;
+                goto end;
+            }
+            else if (foutieveInvoerKindGroterDanTien)
+            {
+                textFoutMelding.Visible = true;
+                textFoutMelding.Text = textFoutMelding.Text = "foutieve invoer: Eén van de ingevoerde kinderen bij 10 en ouder is jonger dan 10; voer deze in het veld voor kinderen van jonger dan 10 in";
+                textResultaat.Text = "";
+                textTotaleBijdrageIs.Visible = false;
+                goto end;
+            }
+            else if (eenKindJongerDanTien)
+            {
+                bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
             }
             else if (tweeKindJongerDanTien)
             {
-                if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxKleinerTienTweedeKindJaar.Text != "2007")
-                {
-                    bijdrageKindKleinerTien = bijdrageTweeKindKleinerDanTien;
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxKleinerTienTweedeKindJaar.Text != "2007")
-                {
-                    if (maandEen < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: het eerste kind is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month)
-                    {
-                        bijdrageKindKleinerTien = bijdrageTweeKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = textFoutMelding.Text = "foutieve invoer: het eerste kind is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindKleinerTien = bijdrageTweeKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxKleinerTienTweedeKindJaar.Text == "2007")
-                {
-                    if (maandTwee < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: het tweede kind is 10 of ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandTwee > peilDatum.Month)
-                    {
-                        bijdrageKindKleinerTien = bijdrageTweeKindKleinerDanTien;
-                    }
-                    else if (maandTwee == peilDatum.Month)
-                    {
-                        if (dagTwee <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: het tweede kind is 10 of ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindKleinerTien = bijdrageTweeKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxKleinerTienTweedeKindJaar.Text == "2007")
-                {
-                    if (maandTwee < peilDatum.Month || maandEen < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandTwee > peilDatum.Month && maandEen > peilDatum.Month)
-                    {
-                        bijdrageKindKleinerTien = bijdrageTweeKindKleinerDanTien;
-                    }
-                    else if (maandTwee == peilDatum.Month || maandEen == peilDatum.Month)
-                    {
-                        if (dagTwee <= peilDatum.Day || dagEen <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindKleinerTien = bijdrageTweeKindKleinerDanTien;
-                        }
-                    }
-                }
+                bijdrageKindKleinerTien = bijdrageTweeKindKleinerDanTien;
             }
             else if (drieKindJongerDanTien)
             {
-                if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxKleinerTienTweedeKindJaar.Text != "2007" && comboBoxKleinerTienDerdeKindJaar.Text != "2007")
-                {
-                    bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxKleinerTienTweedeKindJaar.Text != "2007" && comboBoxKleinerTienDerdeKindJaar.Text != "2007")
-                {
-                    if (maandEen < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: het eerste kind is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month)
-                    {
-                        bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = textFoutMelding.Text = "foutieve invoer: het eerste kind is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxKleinerTienTweedeKindJaar.Text == "2007" && comboBoxKleinerTienDerdeKindJaar.Text != "2007")
-                {
-                    if (maandTwee < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: het tweede kind is 10 of ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandTwee > peilDatum.Month)
-                    {
-                        bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                    }
-                    else if (maandTwee == peilDatum.Month)
-                    {
-                        if (dagTwee <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: het tweede kind is 10 of ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxKleinerTienTweedeKindJaar.Text == "2007" && comboBoxKleinerTienDerdeKindJaar.Text == "2007")
-                {
-                    if (maandTwee < peilDatum.Month || maandEen < peilDatum.Month || maandDrie < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandTwee > peilDatum.Month && maandEen > peilDatum.Month && maandDrie > peilDatum.Month)
-                    {
-                        bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                    }
-                    else if (maandTwee == peilDatum.Month || maandEen == peilDatum.Month || maandDrie == peilDatum.Month)
-                    {
-                        if (dagTwee <= peilDatum.Day || dagEen <= peilDatum.Day || dagDrie <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxKleinerTienTweedeKindJaar.Text != "2007" && comboBoxKleinerTienDerdeKindJaar.Text == "2007")
-                {
-                    if (maandDrie < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: het derde kind is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandDrie > peilDatum.Month)
-                    {
-                        bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                    }
-                    else if (maandDrie == peilDatum.Month)
-                    {
-                        if (dagDrie <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: het derde kind is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxKleinerTienTweedeKindJaar.Text == "2007" && comboBoxKleinerTienDerdeKindJaar.Text != "2007")
-                {
-                    if (maandTwee < peilDatum.Month || maandEen < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandTwee > peilDatum.Month && maandEen > peilDatum.Month)
-                    {
-                        bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                    }
-                    else if (maandTwee == peilDatum.Month || maandEen == peilDatum.Month)
-                    {
-                        if (dagTwee <= peilDatum.Day || dagEen <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxKleinerTienTweedeKindJaar.Text != "2007" && comboBoxKleinerTienDerdeKindJaar.Text == "2007")
-                {
-                    if (maandDrie < peilDatum.Month || maandEen < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandDrie > peilDatum.Month && maandEen > peilDatum.Month)
-                    {
-                        bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                    }
-                    else if (maandDrie == peilDatum.Month || maandEen == peilDatum.Month)
-                    {
-                        if (dagDrie <= peilDatum.Day || dagEen <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxKleinerTienTweedeKindJaar.Text == "2007" && comboBoxKleinerTienDerdeKindJaar.Text == "2007")
-                {
-                    if (maandTwee < peilDatum.Month || maandDrie < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandTwee > peilDatum.Month && maandDrie > peilDatum.Month)
-                    {
-                        bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                    }
-                    else if (maandTwee == peilDatum.Month || maandDrie == peilDatum.Month)
-                    {
-                        if (dagTwee <= peilDatum.Day || dagDrie <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is ouder dan 10; voer deze in het veld voor kinderen van 10 en ouder in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
-                        }
-                    }
-                }
+                bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
             }
-            else if (eenKindGroterDanTien) //dagVier en maandVier en jaarVier gaat om het eerste kind van 10 en groter. dagVijf en maandVijf en jaarVijf gaat om het tweede kind van 10 en groter
-            {
-                if (comboBoxGroterTienEersteKindJaar.Text != "2007")
-                {
-                    bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
-                }
-                else
-                {
-                    if (maandVier > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: dit kind is nog geen 10; voer deze in het veld voor kinderen van 10 en jonger in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandVier < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
-                    }
-                    else if (maandVier == peilDatum.Month)
-                    {
-                        if (dagVier >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: dit kind is nog geen 10; voer deze in het veld voor kinderen van 10 en jonger in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
-                        }
-                    }
-                }
+            else if (eenKindGroterDanTien)
+            {                
+                bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
             }
             else if (tweeKindGroterDanTien)
             {
-                if (comboBoxGroterTienEersteKindJaar.Text != "2007" && comboBoxGroterTienTweedeKindJaar.Text != "2007")
-                {
-                    bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                }
-                else if (comboBoxGroterTienEersteKindJaar.Text == "2007" && comboBoxGroterTienTweedeKindJaar.Text != "2007")
-                {
-                    if (maandVier > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: het eerste kind is nog geen 10; voer deze in het veld voor kinderen van 10 en jonger in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandVier < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                    }
-                    else if (maandVier == peilDatum.Month)
-                    {
-                        if (dagVier >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: het eerste kind is nog geen 10; voer deze in het veld voor kinderen van 10 en jonger in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxGroterTienEersteKindJaar.Text != "2007" && comboBoxGroterTienTweedeKindJaar.Text == "2007")
-                {
-                    if (maandVijf > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: het tweede kind is nog geen 10; voer deze in het veld voor kinderen van 10 en jonger in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandVijf < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                    }
-                    else if (maandVijf == peilDatum.Month)
-                    {
-                        if (dagVijf >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: het tweede kind is nog geen 10; voer deze in het veld voor kinderen van 10 en jonger in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxGroterTienEersteKindJaar.Text == "2007" && comboBoxGroterTienTweedeKindJaar.Text == "2007")
-                {
-                    if (maandVier > peilDatum.Month || maandVijf > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is nog geen 10; voer deze in het veld voor kinderen jonger dan 10 in";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandVier < peilDatum.Month && maandVijf < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                    }
-                    else if (maandVijf == peilDatum.Month || maandVier == peilDatum.Month)
-                    {
-                        if (dagVier >= peilDatum.Day || dagVijf >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is nog geen 10; voer deze in het veld voor kinderen jonger dan 10 in";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        }
-                    }
-                }
+                bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
             }
             else if (eenKleinerEenGroter)
             {
-                if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxGroterTienEersteKindJaar.Text != "2007")
-                {
-                    bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
-                    bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxGroterTienEersteKindJaar.Text == "2007")
-                {
-                    if (maandVier > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: beide kinderen zijn jonger dan 10 jaar; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandVier < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandVier == peilDatum.Month)
-                    {
-                        if (dagVier >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: beide kinderen zijn jonger dan 10 jaar; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxGroterTienEersteKindJaar.Text != "2007")
-                {
-                    if (maandEen < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: beide kinderen zijn ouder dan 10 jaar; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: beide kinderen zijn ouder dan 10 jaar; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxGroterTienEersteKindJaar.Text == "2007")
-                {
-                    if (maandEen < peilDatum.Month || maandVier > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van beide kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month && maandVier < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month || maandVier == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day || dagVier >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van beide kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
+                bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
+                bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
             }
             else if (eenKleinerTweeGroter)
             {
-                if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxGroterTienEersteKindJaar.Text != "2007" && comboBoxGroterTienTweedeKindJaar.Text != "2007")
-                {
-                    bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                    bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxGroterTienEersteKindJaar.Text == "2007" && comboBoxGroterTienTweedeKindJaar.Text != "2007")
-                {
-                    if (maandVier > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: het eerste kind wat is ingevuld bij 10 of ouder, is jonger dan 10 jaar; voer eea correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandVier < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandVier == peilDatum.Month)
-                    {
-                        if (dagVier >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: het eerste kind wat is ingevuld bij 10 of ouder, is jonger dan 10 jaar; voer eea correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxGroterTienEersteKindJaar.Text != "2007" && comboBoxGroterTienTweedeKindJaar.Text != "2007")
-                {
-                    if (maandEen < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: het kind wat is ingevuld bij jonger dan 10, is ouder dan 10 jaar; voer eea correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: het kind wat is ingevuld bij jonger dan 10, is ouder dan 10 jaar; voer eea correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxGroterTienEersteKindJaar.Text == "2007" && comboBoxGroterTienTweedeKindJaar.Text == "2007")
-                {
-                    if (maandEen < peilDatum.Month || maandVier > peilDatum.Month || maandVijf > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month && maandVier < peilDatum.Month && maandVijf < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month || maandVier == peilDatum.Month || maandVijf == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day || dagVier >= peilDatum.Day || dagVijf >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxGroterTienEersteKindJaar.Text == "2007" && comboBoxGroterTienTweedeKindJaar.Text != "2007")
-                {
-                    if (maandEen < peilDatum.Month || maandVier > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month && maandVier < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month || maandVier == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day || dagVier >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxGroterTienEersteKindJaar.Text != "2007" && comboBoxGroterTienTweedeKindJaar.Text == "2007")
-                {
-                    if (maandEen < peilDatum.Month || maandVijf > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month && maandVijf < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month || maandVijf == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day || dagVijf >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxGroterTienEersteKindJaar.Text != "2007" && comboBoxGroterTienTweedeKindJaar.Text == "2007")
-                {
-                    if (maandVijf > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandVijf < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandVijf == peilDatum.Month)
-                    {
-                        if (dagVijf >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxGroterTienEersteKindJaar.Text == "2007" && comboBoxGroterTienTweedeKindJaar.Text == "2007")
-                {
-                    if (maandVier > peilDatum.Month || maandVijf > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandVier < peilDatum.Month && maandVijf < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandVier == peilDatum.Month || maandVijf == peilDatum.Month)
-                    {
-                        if (dagVier >= peilDatum.Day || dagVijf >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
+                bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
+                bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
             }
             else if (tweeKleinerEenGroter)
             {
-                if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxKleinerTienTweedeKindJaar.Text != "2007" && comboBoxGroterTienEersteKindJaar.Text != "2007")
-                {
-                    bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
-                    bijdrageKindKleinerTien = bijdrageTweeKindKleinerDanTien;
-                } // hier gebleven hier geblevenhier geblevenhier geblevenhier geblevenhier geblevenhier geblevenhier geblevenhier geblevenhier geblevenhier geblevenhier geblevenhier geblevenhier geblevenhier geblevenhier gebleven
-                else if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxGroterTienEersteKindJaar.Text == "2007" && comboBoxGroterTienTweedeKindJaar.Text != "2007")
-                {
-                    if (maandVier > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: het eerste kind wat is ingevuld bij 10 of ouder, is jonger dan 10 jaar; voer eea correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandVier < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandVier == peilDatum.Month)
-                    {
-                        if (dagVier >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: het eerste kind wat is ingevuld bij 10 of ouder, is jonger dan 10 jaar; voer eea correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxGroterTienEersteKindJaar.Text != "2007" && comboBoxGroterTienTweedeKindJaar.Text != "2007")
-                {
-                    if (maandEen < peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: het kind wat is ingevuld bij jonger dan 10, is ouder dan 10 jaar; voer eea correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: het kind wat is ingevuld bij jonger dan 10, is ouder dan 10 jaar; voer eea correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxGroterTienEersteKindJaar.Text == "2007" && comboBoxGroterTienTweedeKindJaar.Text == "2007")
-                {
-                    if (maandEen < peilDatum.Month || maandVier > peilDatum.Month || maandVijf > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month && maandVier < peilDatum.Month && maandVijf < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month || maandVier == peilDatum.Month || maandVijf == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day || dagVier >= peilDatum.Day || dagVijf >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxGroterTienEersteKindJaar.Text == "2007" && comboBoxGroterTienTweedeKindJaar.Text != "2007")
-                {
-                    if (maandEen < peilDatum.Month || maandVier > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month && maandVier < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month || maandVier == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day || dagVier >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text == "2007" && comboBoxGroterTienEersteKindJaar.Text != "2007" && comboBoxGroterTienTweedeKindJaar.Text == "2007")
-                {
-                    if (maandEen < peilDatum.Month || maandVijf > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandEen > peilDatum.Month && maandVijf < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandEen == peilDatum.Month || maandVijf == peilDatum.Month)
-                    {
-                        if (dagEen <= peilDatum.Day || dagVijf >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxGroterTienEersteKindJaar.Text != "2007" && comboBoxGroterTienTweedeKindJaar.Text == "2007")
-                {
-                    if (maandVijf > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandVijf < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandVijf == peilDatum.Month)
-                    {
-                        if (dagVijf >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
-                else if (comboBoxKleinerTienEersteKindJaar.Text != "2007" && comboBoxGroterTienEersteKindJaar.Text == "2007" && comboBoxGroterTienTweedeKindJaar.Text == "2007")
-                {
-                    if (maandVier > peilDatum.Month || maandVijf > peilDatum.Month)
-                    {
-                        textFoutMelding.Visible = true;
-                        textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                        textResultaat.Text = "";
-                        textTotaleBijdrageIs.Visible = false;
-                        goto end;
-                    }
-                    else if (maandVier < peilDatum.Month && maandVijf < peilDatum.Month)
-                    {
-                        bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                        bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                    }
-                    else if (maandVier == peilDatum.Month || maandVijf == peilDatum.Month)
-                    {
-                        if (dagVier >= peilDatum.Day || dagVijf >= peilDatum.Day)
-                        {
-                            textFoutMelding.Visible = true;
-                            textFoutMelding.Text = "foutieve invoer: één van de kinderen is in een foutief veld in gevuld; voer ze correct in AUB";
-                            textResultaat.Text = "";
-                            textTotaleBijdrageIs.Visible = false;
-                            goto end;
-                        }
-                        else
-                        {
-                            bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
-                            bijdrageKindKleinerTien = bijdrageEenKindKleinerDanTien;
-                        }
-                    }
-                }
+                bijdrageKindKleinerTien = bijdrageTweeKindKleinerDanTien;
+                bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
             }
-
+            else if (tweeKleinerTweeGroter)
+            {
+                bijdrageKindKleinerTien = bijdrageTweeKindKleinerDanTien;
+                bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
+            }
+            else if (drieKleinerEenGroter)
+            {
+                bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
+                bijdrageKindGroterTien = bijdrageEenKindGroterDanTien;
+            }
+            else if (drieKleinerTweeGroter)
+            {
+                bijdrageKindKleinerTien = bijdrageDrieKindKleinerDanTien;
+                bijdrageKindGroterTien = bijdrageTweeKindGroterDanTien;
+            }
 
             subtotaal = bijdrageKindKleinerTien + bijdrageKindGroterTien;
             if (subtotaal >= 100)
@@ -1185,6 +201,7 @@ namespace Ouderbijdrage
                 comboBoxKleinerTienEersteKindDag.Enabled = true;
                 comboBoxKleinerTienEersteKindMaand.Enabled = true;
                 comboBoxKleinerTienEersteKindJaar.Enabled = true;
+
                 comboBoxKleinerTienTweedeKindDag.Enabled = false;
                 comboBoxKleinerTienTweedeKindMaand.Enabled = false;
                 comboBoxKleinerTienTweedeKindJaar.Enabled = false;
@@ -1195,13 +212,16 @@ namespace Ouderbijdrage
                 comboBoxKleinerTienEersteKindDag.Visible = true;
                 comboBoxKleinerTienEersteKindMaand.Visible = true;
                 comboBoxKleinerTienEersteKindJaar.Visible = true;
+
                 comboBoxKleinerTienTweedeKindDag.Visible = false;
                 comboBoxKleinerTienTweedeKindMaand.Visible = false;
                 comboBoxKleinerTienTweedeKindJaar.Visible = false;
                 comboBoxKleinerTienDerdeKindDag.Visible = false;
                 comboBoxKleinerTienDerdeKindMaand.Visible = false;
                 comboBoxKleinerTienDerdeKindJaar.Visible = false;
+
                 textBoxGebEersteKindMinTien.Visible = true;
+
                 textBoxGebTweedeKindMinTien.Visible = false;
                 textBoxGebDerdeKindMinTien.Visible = false;
 
@@ -1220,6 +240,7 @@ namespace Ouderbijdrage
                 comboBoxKleinerTienTweedeKindDag.Enabled = true;
                 comboBoxKleinerTienTweedeKindMaand.Enabled = true;
                 comboBoxKleinerTienTweedeKindJaar.Enabled = true;
+
                 comboBoxKleinerTienDerdeKindDag.Enabled = false;
                 comboBoxKleinerTienDerdeKindMaand.Enabled = false;
                 comboBoxKleinerTienDerdeKindJaar.Enabled = false;
@@ -1230,11 +251,14 @@ namespace Ouderbijdrage
                 comboBoxKleinerTienTweedeKindDag.Visible = true;
                 comboBoxKleinerTienTweedeKindMaand.Visible = true;
                 comboBoxKleinerTienTweedeKindJaar.Visible = true;
+
                 comboBoxKleinerTienDerdeKindDag.Visible = false;
                 comboBoxKleinerTienDerdeKindMaand.Visible = false;
                 comboBoxKleinerTienDerdeKindJaar.Visible = false;
+
                 textBoxGebEersteKindMinTien.Visible = true;
                 textBoxGebTweedeKindMinTien.Visible = true;
+
                 textBoxGebDerdeKindMinTien.Visible = false;
 
                 comboBoxKleinerTienDerdeKindDag.SelectedIndex = 0;
@@ -1262,6 +286,7 @@ namespace Ouderbijdrage
                 comboBoxKleinerTienDerdeKindDag.Visible = true;
                 comboBoxKleinerTienDerdeKindMaand.Visible = true;
                 comboBoxKleinerTienDerdeKindJaar.Visible = true;
+
                 textBoxGebEersteKindMinTien.Visible = true;
                 textBoxGebTweedeKindMinTien.Visible = true;
                 textBoxGebDerdeKindMinTien.Visible = true;
@@ -1287,6 +312,7 @@ namespace Ouderbijdrage
                 comboBoxKleinerTienDerdeKindDag.Visible = false;
                 comboBoxKleinerTienDerdeKindMaand.Visible = false;
                 comboBoxKleinerTienDerdeKindJaar.Visible = false;
+
                 textBoxGebEersteKindMinTien.Visible = false;
                 textBoxGebTweedeKindMinTien.Visible = false;
                 textBoxGebDerdeKindMinTien.Visible = false;
@@ -1322,6 +348,7 @@ namespace Ouderbijdrage
                 comboBoxGroterTienTweedeKindJaar.Visible = false;
 
                 textBoxGebEersteKindPlusTien.Visible = true;
+
                 textBoxGebTweedeKindPlusTien.Visible = false;
 
                 comboBoxGroterTienTweedeKindDag.SelectedIndex = 0;

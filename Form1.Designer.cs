@@ -85,10 +85,10 @@
             this.textFoutMelding.Enabled = false;
             this.textFoutMelding.Font = new System.Drawing.Font("Calibri", 9F, System.Drawing.FontStyle.Italic);
             this.textFoutMelding.ForeColor = System.Drawing.Color.Maroon;
-            this.textFoutMelding.Location = new System.Drawing.Point(12, 500);
+            this.textFoutMelding.Location = new System.Drawing.Point(12, 468);
             this.textFoutMelding.Multiline = true;
             this.textFoutMelding.Name = "textFoutMelding";
-            this.textFoutMelding.Size = new System.Drawing.Size(791, 32);
+            this.textFoutMelding.Size = new System.Drawing.Size(791, 64);
             this.textFoutMelding.TabIndex = 1;
             this.textFoutMelding.TabStop = false;
             this.textFoutMelding.Text = "fout";
