@@ -66,6 +66,10 @@ namespace Ouderbijdrage
                 goto end;
             }
 
+            subtotaal = 0;
+            bijdrageKindKleinerTien = 0;
+            bijdrageKindGroterTien = 0;
+
             bool eenKindJongerDanTien = comboBoxKinderenKleinerDanTien.Text == "1" && comboBoxKinderenTienOfGroter.Text == "0" && comboBoxKinderenTienOfGroter.Text == "0";
             bool tweeKindJongerDanTien = comboBoxKinderenKleinerDanTien.Text == "2" && comboBoxKinderenTienOfGroter.Text == "0" && comboBoxKinderenTienOfGroter.Text == "0";
             bool drieKindJongerDanTien = comboBoxKinderenKleinerDanTien.Text == "3 of meer" && comboBoxKinderenTienOfGroter.Text == "0" && comboBoxKinderenTienOfGroter.Text == "0";
